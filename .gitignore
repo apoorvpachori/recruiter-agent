@@ -28,3 +28,7 @@ browser-profiles/
 
 # macOS
 .DS_Store
+
+# Local planning docs; keep drafts on this machine unless explicitly shared
+docs/product-spec.md
+docs/architecture.md
