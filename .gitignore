@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Private candidate and application data (never commit real user data)
+data/
+*.sqlite
+*.sqlite3
+*.db
+checkpoints/
+resumes/
+browser-profiles/
+
+# macOS
+.DS_Store
