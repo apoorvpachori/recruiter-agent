@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# OpenWork attachment/cache workspace data
+.opencode/openwork/inbox/
+
+# Private candidate and application data (never commit real user data)
+data/*.json
+!data/example-profile.json
+*.sqlite
+*.sqlite3
+*.db
+checkpoints/
+resumes/
+browser-profiles/
+
+# macOS
+.DS_Store
+
+# Local planning docs; keep drafts on this machine unless explicitly shared
+docs/product-spec.md
+docs/architecture.md
