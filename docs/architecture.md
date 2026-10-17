@@ -142,12 +142,14 @@ Use request IDs, idempotency keys on create/resume actions, bounded payloads, an
 │   ├── product-spec.md
 │   └── architecture.md
 ├── src/recruiter_agent/
-│   ├── api/                 # FastAPI routers and dependencies
-│   ├── domain/              # schemas, enums, policy and transitions
-│   ├── services/            # use cases, review/approval policy
-│   ├── graph/               # LangGraph state, nodes, builder
-│   ├── adapters/            # Ashby fetcher/parser, LLM, JSON file persistence
-│   └── main.py
+│   ├── api/                  # FastAPI routers and dependencies
+│   │   ├── router.py         # route composition
+│   │   └── health.py         # health endpoint
+│   ├── agent/                # LangGraph state, nodes, graph builder
+│   ├── domain/               # schemas, enums, policy and transitions
+│   ├── services/             # use cases, review/approval policy
+│   ├── adapters/             # Ashby fetcher/parser, LLM, JSON file persistence
+│   └── main.py               # application composition / ASGI entry point
 ├── tests/
 │   ├── unit/
 │   ├── integration/
