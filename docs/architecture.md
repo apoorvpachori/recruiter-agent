@@ -147,6 +147,7 @@ Use request IDs, idempotency keys on create/resume actions, bounded payloads, an
 │   │   ├── router.py         # route composition
 │   │   └── health.py         # health endpoint
 │   ├── agent/                # LangGraph state, nodes, graph builder
+│   ├── profile/              # candidate profile schema and local loader
 │   ├── domain/               # schemas, enums, policy and transitions
 │   ├── services/             # use cases, review/approval policy
 │   ├── adapters/             # Ashby fetcher/parser, LLM, JSON file persistence

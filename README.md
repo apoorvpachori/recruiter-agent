@@ -23,3 +23,7 @@ uv run ruff format --check .
 ```
 
 `uv.lock` is committed to pin reproducible dependency resolution. Keep any real profile, resume, and application data in the ignored local `data/` directory; never commit it.
+
+## Candidate profile
+
+The single-user profile lives in `data/profile.json`. It is validated by the Pydantic models in `src/recruiter_agent/profile/` and is intentionally ignored by Git. Edit this file directly; the agent can load it through the profile loader when a workflow needs candidate context. Unset preferences are left empty or `null` rather than inferred. You can point the loader at another local file with `RECRUITER_AGENT_PROFILE_PATH`.

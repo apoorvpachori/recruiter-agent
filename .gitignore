@@ -13,8 +13,12 @@ build/
 .env.*
 !.env.example
 
+# OpenWork attachment/cache workspace data
+.opencode/openwork/inbox/
+
 # Private candidate and application data (never commit real user data)
-data/
+data/*.json
+!data/example-profile.json
 *.sqlite
 *.sqlite3
 *.db
