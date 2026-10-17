@@ -27,3 +27,7 @@ uv run ruff format --check .
 ## Candidate profile
 
 The single-user profile lives in `data/profile.json`. It is validated by the Pydantic models in `src/recruiter_agent/profile/` and is intentionally ignored by Git. Edit this file directly; the agent can load it through the profile loader when a workflow needs candidate context. Unset preferences are left empty or `null` rather than inferred. You can point the loader at another local file with `RECRUITER_AGENT_PROFILE_PATH`.
+
+## Model and tracing configuration
+
+Copy `.env.example` to `.env` and set `FIREWORKS_API_KEY` and `FIREWORKS_MODEL`. Never commit `.env` or paste keys into chat. LangSmith tracing is disabled by default; set `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` to enable it. Traces can include prompt/output content, so review the data handling implications before enabling tracing.
