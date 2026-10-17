@@ -30,4 +30,4 @@ The single-user profile lives in `data/profile.json`. It is validated by the Pyd
 
 ## Model and tracing configuration
 
-Set `FIREWORKS_API_KEY` and `FIREWORKS_MODEL` in `.env`. LangSmith tracing is enabled when `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` is set; the default example enables tracing. Use `LANGSMITH_PROJECT` to choose the dashboard project. Traces can include prompt/output content. Never commit `.env` or paste keys into chat.
+Set `FIREWORKS_API_KEY` and `FIREWORKS_MODEL` in `.env`. LangSmith tracing is enabled when `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` is set; the default example enables tracing. Use `LANGSMITH_PROJECT` to choose the dashboard project. `LANGSMITH_AGENT_ID` and `LANGSMITH_AGENT_ENVIRONMENT` are optional trace metadata; they do not select a project or change where a run is stored. Traces can include prompt/output content. Never commit `.env` or paste keys into chat.
