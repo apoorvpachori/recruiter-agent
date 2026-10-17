@@ -3,6 +3,8 @@
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
+from recruiter_agent.agent.graph import invoke_agent
+
 router = APIRouter(prefix="/v1/agent", tags=["agent"])
 
 
@@ -13,16 +15,19 @@ class AgentInputRequest(BaseModel):
 
 
 class AgentInputResponse(BaseModel):
-    """Acknowledgement of an accepted text message."""
+    """Agent response to an accepted text message."""
 
     status: str
+    response: str
     message: str
 
 
-@router.post("/input", response_model=AgentInputResponse, status_code=202)
+@router.post("/input", response_model=AgentInputResponse)
 def submit_agent_input(request: AgentInputRequest) -> AgentInputResponse:
-    """Accept a text prompt without interpreting or processing it."""
+    """Run a single text-only agent turn."""
+    response = invoke_agent(request.text)
     return AgentInputResponse(
         status="accepted",
-        message="Text input received. Agent processing is not implemented yet.",
+        response=response,
+        message="Agent response generated.",
     )
