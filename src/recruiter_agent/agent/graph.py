@@ -2,24 +2,11 @@
 
 from langchain.agents import create_agent
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_fireworks import ChatFireworks
+from langchain_core.tracers.context import tracing_v2_enabled
 
 from recruiter_agent.agent.prompts import RECRUITER_SYSTEM_PROMPT
-from recruiter_agent.settings import Settings, get_settings
-
-
-def create_model(settings: Settings | None = None) -> BaseChatModel:
-    """Create the configured Fireworks chat model."""
-    settings = settings or get_settings()
-    if not settings.fireworks_api_key or not settings.fireworks_api_key.get_secret_value():
-        raise RuntimeError("Set FIREWORKS_API_KEY in .env before invoking the agent.")
-    if not settings.fireworks_model:
-        raise RuntimeError("Set FIREWORKS_MODEL in .env before invoking the agent.")
-
-    return ChatFireworks(
-        model=settings.fireworks_model,
-        api_key=settings.fireworks_api_key,
-    )
+from recruiter_agent.providers.fireworks import create_fireworks_model
+from recruiter_agent.settings import get_settings
 
 
 def create_agent_graph(model: BaseChatModel):
@@ -33,7 +20,15 @@ def create_agent_graph(model: BaseChatModel):
 
 def invoke_agent(text: str) -> str:
     """Run one stateless text turn and return the final assistant response."""
-    result = create_agent_graph(create_model()).invoke({"messages": [("user", text)]})
+    settings = get_settings()
+    settings.configure_langsmith()
+
+    graph = create_agent_graph(create_fireworks_model(settings))
+    if settings.langsmith_tracing:
+        with tracing_v2_enabled(project_name=settings.langsmith_project):
+            result = graph.invoke({"messages": [("user", text)]})
+    else:
+        result = graph.invoke({"messages": [("user", text)]})
     messages = result["messages"]
     if not messages:
         raise RuntimeError("The agent returned no messages.")
