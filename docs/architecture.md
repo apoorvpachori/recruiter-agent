@@ -96,7 +96,7 @@ Normalize statuses using enums and validate transitions in service code. Validat
 ## 5. API sketch
 
 - `GET /healthz`
-- `POST /v1/agent/input` — `{text}` containing exactly one supported Ashby job URL; initially acknowledges the input without running the workflow.
+- `POST /v1/agent/input` — `{text}` with an un-interpreted user message; initially acknowledges input without running the workflow.
 - `GET|PUT /v1/profile` — the single local user's profile; validate and version updates.
 - `POST /v1/jobs/analyze` — `{job_url}`; starts or resumes analysis and returns run ID/state.
 - `GET /v1/runs/{run_id}` — progress, result summary, pending-review requirement.
