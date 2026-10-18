@@ -1,6 +1,7 @@
 """Read-only webpage retrieval and text extraction."""
 
 import ipaddress
+import logging
 import socket
 from urllib.parse import urljoin, urlsplit
 
@@ -12,6 +13,7 @@ MAX_RESPONSE_BYTES = 2_000_000
 MAX_TEXT_CHARS = 30_000
 MAX_REDIRECTS = 5
 USER_AGENT = "recruiter-agent/0.1 (read-only job research)"
+logger = logging.getLogger(__name__)
 
 
 class PageContent(BaseModel):
@@ -92,6 +94,12 @@ def get_page_url(url: str, *, timeout: float = 15.0) -> PageContent:
     if not current_url:
         raise ValueError("URL must not be empty.")
 
+    parsed_url = urlsplit(current_url)
+    logger.info(
+        "webpage_fetch_started",
+        extra={"event": "webpage_fetch_started", "host": parsed_url.hostname or "invalid"},
+    )
+
     headers = {"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml"}
     with httpx.Client(follow_redirects=False, timeout=timeout, headers=headers) as client:
         for _ in range(MAX_REDIRECTS + 1):
@@ -121,6 +129,17 @@ def get_page_url(url: str, *, timeout: float = 15.0) -> PageContent:
                     response.encoding or "utf-8",
                     errors="replace",
                 )
-                return _extract_page(url, str(response.url), html)
+                page = _extract_page(url, str(response.url), html)
+                logger.info(
+                    "webpage_fetch_completed",
+                    extra={
+                        "event": "webpage_fetch_completed",
+                        "host": response.url.host,
+                        "status_code": response.status_code,
+                        "text_length": len(page.text),
+                        "truncated": page.truncated,
+                    },
+                )
+                return page
 
     raise ValueError(f"Webpage exceeded the {MAX_REDIRECTS}-redirect limit.")
