@@ -1,8 +1,17 @@
 """Compose the application and expose the ASGI entry point."""
 
-from fastapi import FastAPI
+import logging
+import time
+import uuid
+
+from fastapi import FastAPI, Request
+from starlette.responses import Response
 
 from recruiter_agent.api.router import api_router
+from recruiter_agent.logging_config import configure_logging
+
+configure_logging()
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Recruiter Agent",
@@ -10,3 +19,38 @@ app = FastAPI(
     version="0.1.0",
 )
 app.include_router(api_router)
+
+
+@app.middleware("http")
+async def log_http_request(request: Request, call_next) -> Response:
+    """Log request metadata and outcome, never body, query, or URL values."""
+    request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+    started = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception(
+            "http_request_failed",
+            extra={
+                "event": "http_request_failed",
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+            },
+        )
+        raise
+
+    response.headers["x-request-id"] = request_id
+    logger.info(
+        "http_request_completed",
+        extra={
+            "event": "http_request_completed",
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": response.status_code,
+            "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+        },
+    )
+    return response

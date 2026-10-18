@@ -1,5 +1,8 @@
 """Factory and invocation helpers for the text-only ReAct agent graph."""
 
+import logging
+import time
+
 from langchain.agents import create_agent
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.tracers.context import tracing_v2_enabled
@@ -9,6 +12,8 @@ from recruiter_agent.agent.prompts import RECRUITER_SYSTEM_PROMPT
 from recruiter_agent.agent.tools import read_webpage
 from recruiter_agent.providers.fireworks import create_fireworks_model
 from recruiter_agent.settings import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def create_agent_graph(model: BaseChatModel):
@@ -27,6 +32,7 @@ def invoke_agent(text: str) -> str:
     settings.configure_langsmith()
 
     graph = create_agent_graph(create_fireworks_model(settings))
+    started = time.perf_counter()
     metadata = {
         key: value
         for key, value in {
@@ -46,6 +52,14 @@ def invoke_agent(text: str) -> str:
     messages = result["messages"]
     if not messages:
         raise RuntimeError("The agent returned no messages.")
+    logger.info(
+        "agent_run_completed",
+        extra={
+            "event": "agent_run_completed",
+            "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+            "message_count": len(messages),
+        },
+    )
     return str(messages[-1].content)
 
 
