@@ -9,7 +9,7 @@ from langchain_core.tracers.context import tracing_v2_enabled
 from langsmith import traceable
 
 from recruiter_agent.agent.prompts import RECRUITER_SYSTEM_PROMPT
-from recruiter_agent.agent.tools import read_webpage
+from recruiter_agent.agent.tools import evaluate_job_fit, read_webpage
 from recruiter_agent.providers.fireworks import create_fireworks_model
 from recruiter_agent.settings import get_settings
 
@@ -20,9 +20,14 @@ def create_agent_graph(model: BaseChatModel):
     """Build an uncheckpointed LangChain v1 agent graph with no tools."""
     return create_agent(
         model=model,
-        tools=[read_webpage],
+        tools=[read_webpage, evaluate_job_fit],
         system_prompt=RECRUITER_SYSTEM_PROMPT,
     )
+
+
+def create_model_for_extraction() -> BaseChatModel:
+    """Construct the configured model for structured webpage fact extraction."""
+    return create_fireworks_model(get_settings())
 
 
 @traceable(name="recruiter_agent.invoke", run_type="chain")
