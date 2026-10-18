@@ -5,6 +5,7 @@ from langchain_core.language_models.fake_chat_models import FakeListChatModel
 from langchain_core.messages import AIMessage, ToolMessage
 
 from recruiter_agent.agent.graph import create_agent_graph
+from recruiter_agent.profile.models import CandidateProfile
 from recruiter_agent.providers.fireworks import create_fireworks_model
 from recruiter_agent.settings import Settings
 from recruiter_agent.tools.read_webpage import PageContent
@@ -26,6 +27,10 @@ class FakeToolCallingModel(FakeListChatModel):
         else:
             message = AIMessage(content=response)
         return ChatResult(generations=[ChatGeneration(message=message)])
+
+
+def empty_test_profile() -> CandidateProfile:
+    return CandidateProfile(schema_version=1)
 
 
 def test_react_graph_returns_fake_model_response() -> None:
@@ -70,6 +75,80 @@ def test_react_graph_exposes_webpage_reader_tool(monkeypatch: pytest.MonkeyPatch
     assert isinstance(result["messages"][-2], ToolMessage)
     assert result["messages"][-2].name == "read_webpage"
     assert "Applied AI role" in result["messages"][-1].content
+
+
+def test_react_graph_exposes_deterministic_fit_tool(monkeypatch: pytest.MonkeyPatch) -> None:
+    from recruiter_agent.jobs.models import JobPageExtraction
+
+    class FakeExtractionModel:
+        def with_structured_output(self, schema):
+            assert schema is JobPageExtraction
+            return self
+
+        def invoke(self, prompt):
+            return JobPageExtraction()
+
+    def fake_read_page(url: str) -> PageContent:
+        return PageContent(
+            url=url,
+            final_url=url,
+            title="Example job",
+            text="Example job description.",
+        )
+
+    monkeypatch.setattr("recruiter_agent.agent.tools.get_page_url", fake_read_page)
+    monkeypatch.setattr(
+        "recruiter_agent.agent.tools.create_fireworks_model", lambda settings: FakeExtractionModel()
+    )
+    monkeypatch.setattr("recruiter_agent.agent.tools.load_profile", empty_test_profile)
+    model = FakeToolCallingModel(
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "evaluate_job_fit",
+                        "args": {"job": {"source_url": "https://example.com/job"}},
+                        "id": "evaluate-fit-1",
+                    }
+                ],
+            ),
+            AIMessage(content="This is a fit based on known preferences."),
+        ]
+    )
+    graph = create_agent_graph(model)
+
+    result = graph.invoke({"messages": [("user", "Check fit for https://example.com/job")]})
+
+    assert isinstance(result["messages"][-2], ToolMessage)
+    assert result["messages"][-2].name == "evaluate_job_fit"
+    assert "fit based on known preferences" in result["messages"][-1].content
+
+
+def test_fit_tool_stops_when_job_url_redirects_to_generic_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from recruiter_agent.agent.tools import evaluate_job_fit
+    from recruiter_agent.tools.read_webpage import PageContent
+
+    monkeypatch.setattr(
+        "recruiter_agent.agent.tools.get_page_url",
+        lambda url: PageContent(
+            url=url,
+            final_url="https://jobs.example.com/company?error=true",
+            title="Jobs at Example Company",
+            description=None,
+            text="General job board listing text.",
+        ),
+    )
+
+    result = evaluate_job_fit.invoke(
+        {"job": {"source_url": "https://jobs.example.com/company/role-id"}}
+    )
+
+    assert result["job"]["page_issue"] is not None
+    assert result["assessment"]["overall_status"] == "unknown"
+    assert all(criterion["status"] == "unknown" for criterion in result["assessment"]["criteria"])
 
 
 def test_model_configuration_requires_a_fireworks_key() -> None:
