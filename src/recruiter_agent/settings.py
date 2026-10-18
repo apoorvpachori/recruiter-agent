@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     langsmith_api_key: SecretStr | None = None
     langsmith_project: str = "recruiter-agent"
     langsmith_endpoint: str = "https://api.smith.langchain.com"
+    langsmith_agent_id: str | None = None
+    langsmith_agent_environment: str | None = None
 
     def configure_langsmith(self) -> None:
         """Configure LangChain's process-level tracing environment."""
