@@ -53,6 +53,10 @@ def test_react_graph_exposes_webpage_reader_tool(monkeypatch: pytest.MonkeyPatch
         )
 
     monkeypatch.setattr("recruiter_agent.agent.tools.get_page_url", fake_read_webpage)
+    monkeypatch.setattr(
+        "recruiter_agent.agent.tools._web_search_provider.search",
+        lambda query, max_results=5: {"query": query, "results": []},
+    )
     model = FakeToolCallingModel(
         responses=[
             AIMessage(
@@ -123,6 +127,51 @@ def test_react_graph_exposes_deterministic_fit_tool(monkeypatch: pytest.MonkeyPa
     assert isinstance(result["messages"][-2], ToolMessage)
     assert result["messages"][-2].name == "evaluate_job_fit"
     assert "fit based on known preferences" in result["messages"][-1].content
+
+
+def test_react_graph_exposes_company_search_tool(monkeypatch: pytest.MonkeyPatch) -> None:
+    from datetime import UTC, datetime
+
+    from recruiter_agent.providers.search import SearchResult, WebSearchResponse
+
+    monkeypatch.setattr(
+        "recruiter_agent.agent.tools._web_search_provider.search",
+        lambda query, max_results=5: WebSearchResponse(
+            query=query,
+            provider="brave",
+            retrieved_at=datetime.now(UTC),
+            results=[
+                SearchResult(
+                    title="Example Series B announcement",
+                    url="https://example.com/news/series-b",
+                    snippet="Example AI raised a Series B round.",
+                )
+            ],
+        ),
+    )
+    model = FakeToolCallingModel(
+        responses=[
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "search_company_web",
+                        "args": {"query": "Example AI funding stage"},
+                        "id": "search-company-1",
+                    }
+                ],
+            ),
+            AIMessage(content="I found a source reporting a Series B round."),
+        ]
+    )
+
+    result = create_agent_graph(model).invoke(
+        {"messages": [("user", "Research Example AI's funding stage.")]}
+    )
+
+    assert isinstance(result["messages"][-2], ToolMessage)
+    assert result["messages"][-2].name == "search_company_web"
+    assert "Series B round" in result["messages"][-1].content
 
 
 def test_fit_tool_stops_when_job_url_redirects_to_generic_page(

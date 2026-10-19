@@ -1,7 +1,9 @@
 """Tools exposed to the personal job-search agent."""
 
+import logging
 from urllib.parse import urlsplit
 
+import httpx
 from langchain_core.tools import tool
 
 from recruiter_agent.jobs.fit import evaluate_fit
@@ -14,9 +16,13 @@ from recruiter_agent.jobs.models import (
     JobPosting,
 )
 from recruiter_agent.profile.loader import load_profile
+from recruiter_agent.providers.brave_search import BraveSearchProvider
 from recruiter_agent.providers.fireworks import create_fireworks_model
 from recruiter_agent.settings import get_settings
 from recruiter_agent.tools.read_webpage import PageContent, get_page_url
+
+_web_search_provider = BraveSearchProvider()
+logger = logging.getLogger(__name__)
 
 
 @tool
@@ -31,8 +37,50 @@ def read_webpage(url: str) -> dict[str, str | bool | None]:
     Args:
         url: Absolute HTTP or HTTPS URL to a public webpage.
     """
-    page: PageContent = get_page_url(url)
-    return page.model_dump()
+    try:
+        page: PageContent = get_page_url(url)
+    except (ValueError, httpx.HTTPError) as exc:
+        logger.warning(
+            "webpage_fetch_failed",
+            extra={"event": "webpage_fetch_failed", "host": urlsplit(url).hostname or "invalid"},
+        )
+        return {"ok": False, "error": str(exc)}
+    return {"ok": True, "page": page.model_dump()}
+
+
+@tool
+def search_company_web(query: str) -> dict:
+    """Find current public sources about a company or job-related topic.
+
+    Use targeted searches for company size, funding stage, industry, or possible
+    defense-related work. The result includes source URLs and retrieval time.
+    Search snippets are leads, not verified facts; open relevant results with
+    read_webpage and preserve citations before using them in a fit assessment.
+
+    Args:
+        query: Concise web search query about a company or job-related fact.
+    """
+    try:
+        result = _web_search_provider.search(query, max_results=5)
+    except (ValueError, RuntimeError, httpx.HTTPError) as exc:
+        logger.warning(
+            "web_search_failed",
+            extra={
+                "event": "web_search_failed",
+                "provider": "brave",
+                "error_type": type(exc).__name__,
+            },
+        )
+        return {
+            "ok": False,
+            "provider": "brave",
+            "error": (
+                f"Web search was unavailable ({type(exc).__name__}). "
+                "Use other available evidence and mark missing facts unknown."
+            ),
+            "results": [],
+        }
+    return {"ok": True, **result.model_dump(mode="json")}
 
 
 @tool
@@ -113,4 +161,10 @@ def evaluate_job_fit(job: dict) -> dict:
     return {
         "job": posting.model_dump(mode="json"),
         "assessment": assessment.model_dump(mode="json"),
+        "evaluation_instruction": (
+            "Report assessment.overall_status and assessment.summary verbatim as the fit result. "
+            "Do not override or upgrade the deterministic status with a manual judgment. "
+            "Use researched facts only if they are passed into a future evaluator version; "
+            "for this call, company search is context only and must not alter the assessment."
+        ),
     }
