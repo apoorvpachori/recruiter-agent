@@ -352,8 +352,9 @@ def evaluate_fit(job: JobPosting, profile: CandidateProfile) -> FitAssessment:
         unknown_count = sum(criterion.status == FitStatus.UNKNOWN for criterion in relevant)
         if unknown_count:
             summary = (
-                "No explicit preference failures were found. "
-                f"{unknown_count} criteria remain unknown or unverified."
+                "Provisional match: no explicit preference failures were found. "
+                f"{unknown_count} criteria remain unknown or unverified; "
+                "this is not a fully verified fit."
             )
         elif FitStatus.MATCH in statuses:
             summary = "The supplied job facts match the configured preferences."
