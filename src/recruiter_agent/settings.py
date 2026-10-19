@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     fireworks_api_key: SecretStr | None = None
     fireworks_model: str | None = None
+    brave_search_api_key: SecretStr | None = None
+    brave_search_endpoint: str = "https://api.search.brave.com/res/v1/llm/context"
     langsmith_tracing: bool = False
     langsmith_api_key: SecretStr | None = None
     langsmith_project: str = "recruiter-agent"

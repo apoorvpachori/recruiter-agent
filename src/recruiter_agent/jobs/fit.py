@@ -341,47 +341,26 @@ def evaluate_fit(job: JobPosting, profile: CandidateProfile) -> FitAssessment:
         _defense_dealbreaker(preferences.excluded_criteria, [job.company, job.industry, job.title]),
     ]
 
-    relevant = [
-        criterion
-        for criterion in criteria
-        if criterion.preference is not None
-        and not criterion.criterion.startswith("excluded_criteria:")
-    ]
+    relevant = [criterion for criterion in criteria if criterion.preference is not None]
     applicable = [criterion for criterion in relevant if criterion.status != FitStatus.UNKNOWN]
     statuses = {criterion.status for criterion in applicable}
-    has_dealbreaker_mismatch = any(
-        criterion.criterion.startswith("excluded_criteria:")
-        and criterion.status == FitStatus.MISMATCH
-        for criterion in criteria
-    )
-    if FitStatus.MISMATCH in statuses or has_dealbreaker_mismatch:
+    if FitStatus.MISMATCH in statuses:
         overall = FitStatus.MISMATCH
-        summary = (
-            "At least one explicit preference or dealbreaker is contradicted by the job facts."
-        )
-    elif FitStatus.MATCH in statuses:
+        summary = "At least one explicit preference is contradicted by the supplied job facts."
+    else:
         overall = FitStatus.MATCH
         unknown_count = sum(criterion.status == FitStatus.UNKNOWN for criterion in relevant)
         if unknown_count:
             summary = (
-                "Known preferences look like a fit; some criteria remain unknown "
-                "and need verification."
+                "No explicit preference failures were found. "
+                f"{unknown_count} criteria remain unknown or unverified."
             )
-        else:
+        elif FitStatus.MATCH in statuses:
             summary = "The supplied job facts match the configured preferences."
-    else:
-        overall = FitStatus.UNKNOWN
-        summary = "There are not enough known facts to assess overall fit."
-
-    defense_unverified = any(
-        criterion.criterion == "excluded_criteria:defense" and criterion.status == FitStatus.UNKNOWN
-        for criterion in criteria
-    )
-    if defense_unverified and overall == FitStatus.MATCH:
-        overall = FitStatus.UNKNOWN
-        summary += (
-            " The defense-company dealbreaker is not verified; "
-            "absence of evidence is not clearance."
-        )
+        else:
+            summary = (
+                "No preference failures were found; no configured criteria "
+                "had enough facts to assess."
+            )
 
     return FitAssessment(overall_status=overall, summary=summary, criteria=criteria)
