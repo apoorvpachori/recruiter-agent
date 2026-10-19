@@ -62,7 +62,8 @@ def test_evaluate_fit_matches_known_preferences_but_keeps_unverified_dealbreaker
     assert _criterion(assessment, "domain").status == FitStatus.UNKNOWN
     assert _criterion(assessment, "excluded_criteria:defense").status == FitStatus.UNKNOWN
     assert assessment.overall_status == FitStatus.MATCH
-    assert "criteria remain unknown or unverified" in assessment.summary
+    assert "Provisional match" in assessment.summary
+    assert "not a fully verified fit" in assessment.summary
 
 
 def test_evaluate_fit_flags_defense_dealbreaker_and_low_salary() -> None:
@@ -106,7 +107,7 @@ def test_evaluate_fit_returns_unknown_for_missing_or_uncertain_facts() -> None:
     assert _criterion(assessment, "employee_count").status == FitStatus.UNKNOWN
     assert _criterion(assessment, "funding_stage").status == FitStatus.UNKNOWN
     assert assessment.overall_status == FitStatus.MATCH
-    assert "No explicit preference failures were found" in assessment.summary
+    assert "Provisional match" in assessment.summary
 
 
 def test_defense_dealbreaker_uses_only_explicit_supplied_evidence() -> None:
