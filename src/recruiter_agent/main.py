@@ -3,6 +3,7 @@
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -16,18 +17,23 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
-    """Initialize the minimal local SQLite schema at application startup."""
-    create_schema()
-    yield
+def make_lifespan(schema_initializer: Callable[[], None] = create_schema):
+    """Build an app lifespan with injectable schema initialization."""
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        """Initialize the minimal local SQLite schema at application startup."""
+        schema_initializer()
+        yield
+
+    return lifespan
 
 
 app = FastAPI(
     title="Recruiter Agent",
     description="A personal AI job-search copilot.",
     version="0.1.0",
-    lifespan=lifespan,
+    lifespan=make_lifespan(),
 )
 app.include_router(api_router)
 

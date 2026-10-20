@@ -6,9 +6,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel
 
-from recruiter_agent.database import get_db_session
+from recruiter_agent.database import create_schema, get_db_session
 from recruiter_agent.jobs.repository import Job, JobStatus
-from recruiter_agent.main import app
+from recruiter_agent.main import app, make_lifespan
 
 
 @pytest.fixture
@@ -24,12 +24,17 @@ def client() -> Generator[TestClient]:
         with Session(engine) as session:
             yield session
 
+    original_lifespan = app.router.lifespan_context
+    app.router.lifespan_context = make_lifespan(lambda: create_schema(engine))
     app.dependency_overrides[get_db_session] = override_session
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
-    SQLModel.metadata.drop_all(engine)
-    engine.dispose()
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()
+        app.router.lifespan_context = original_lifespan
+        SQLModel.metadata.drop_all(engine)
+        engine.dispose()
 
 
 def test_create_list_get_and_update_job(client: TestClient) -> None:
