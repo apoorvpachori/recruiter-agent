@@ -86,11 +86,19 @@ def test_react_graph_exposes_deterministic_fit_tool(monkeypatch: pytest.MonkeyPa
 
     class FakeExtractionModel:
         def with_structured_output(self, schema):
-            assert schema is JobPageExtraction
+            self.schema = schema
             return self
 
         def invoke(self, prompt):
-            return JobPageExtraction()
+            if self.schema is JobPageExtraction:
+                return JobPageExtraction()
+            return {
+                "overall_status": "unknown",
+                "summary": "No sufficient facts were provided.",
+                "rationale": "The test extraction contains no preference-relevant values.",
+                "confidence": "low",
+                "criteria": [],
+            }
 
     def fake_read_page(url: str) -> PageContent:
         return PageContent(
@@ -102,7 +110,8 @@ def test_react_graph_exposes_deterministic_fit_tool(monkeypatch: pytest.MonkeyPa
 
     monkeypatch.setattr("recruiter_agent.agent.tools.get_page_url", fake_read_page)
     monkeypatch.setattr(
-        "recruiter_agent.agent.tools.create_fireworks_model", lambda settings: FakeExtractionModel()
+        "recruiter_agent.agent.tools.create_fireworks_model",
+        lambda settings: FakeExtractionModel(),
     )
     monkeypatch.setattr("recruiter_agent.agent.tools.load_profile", empty_test_profile)
     model = FakeToolCallingModel(

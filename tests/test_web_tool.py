@@ -1,67 +1,113 @@
-from collections.abc import Iterator
+import asyncio
 
-import httpx
 import pytest
 
 from recruiter_agent.tools.read_webpage import get_page_url
 
 
-class MockResponse:
-    def __init__(
-        self,
-        *,
-        status_code: int = 200,
-        headers: dict[str, str] | None = None,
-        content: bytes = b"",
-        url: str = "https://example.com/jobs/role",
-    ) -> None:
-        self.status_code = status_code
-        self.headers = headers or {"content-type": "text/html; charset=utf-8"}
-        self.content = content
-        self.url = httpx.URL(url)
-        self.encoding = "utf-8"
-        self.is_redirect = status_code in {301, 302, 303, 307, 308}
+class MockBrowserContext:
+    def __init__(self, page) -> None:
+        self.page = page
+        self.route_handler = None
+        self.closed = False
 
-    def __enter__(self) -> MockResponse:
-        return self
+    async def route(self, pattern, handler) -> None:
+        self.route_handler = handler
 
-    def __exit__(self, *_: object) -> None:
+    async def new_page(self):
+        return self.page
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class MockBrowser:
+    def __init__(self, context) -> None:
+        self.context = context
+        self.closed = False
+
+    async def new_context(self, **kwargs):
+        return self.context
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class MockChromium:
+    def __init__(self, browser) -> None:
+        self.browser = browser
+
+    async def launch(self, **kwargs):
+        return self.browser
+
+
+class MockPlaywright:
+    def __init__(self, chromium) -> None:
+        self.chromium = chromium
+
+
+class MockPlaywrightManager:
+    def __init__(self, playwright) -> None:
+        self.playwright = playwright
+
+    async def __aenter__(self):
+        return self.playwright
+
+    async def __aexit__(self, *_):
         return None
 
-    def iter_bytes(self) -> Iterator[bytes]:
-        yield self.content
 
-    def raise_for_status(self) -> None:
-        if self.status_code >= 400:
-            raise httpx.HTTPStatusError("request failed", request=None, response=None)
+class MockLocator:
+    def __init__(self, text=None, attribute=None) -> None:
+        self.text = text
+        self.attribute = attribute
+
+    async def get_attribute(self, name, timeout=None):
+        return self.attribute
+
+    async def inner_text(self, timeout=None):
+        return self.text
 
 
-class MockClient:
-    def __init__(self, responses: list[MockResponse]) -> None:
-        self.responses = iter(responses)
-        self.requests: list[str] = []
+class MockPage:
+    def __init__(self, *, title, description, text, url):
+        self._title = title
+        self._description = description
+        self._text = text
+        self.url = url
 
-    def __enter__(self) -> MockClient:
-        return self
+    async def goto(self, url, *, wait_until, timeout):
+        class Response:
+            status = 200
 
-    def __exit__(self, *_: object) -> None:
+        return Response()
+
+    async def wait_for_load_state(self, state, timeout=None):
         return None
 
-    def stream(self, method: str, url: str) -> MockResponse:
-        assert method == "GET"
-        self.requests.append(url)
-        response = next(self.responses)
-        response.url = httpx.URL(url)
-        return response
+    async def title(self):
+        return self._title
+
+    def locator(self, selector):
+        if selector.startswith("meta"):
+            return MockLocator(attribute=self._description)
+        return MockLocator(text=self._text)
 
 
 def test_extracts_main_page_content(monkeypatch: pytest.MonkeyPatch) -> None:
-    html = b"""<html><head><title>Applied AI Engineer</title>
-    <meta name="description" content="Build AI systems"></head>
-    <body><header>Header</header><main><h1>Role</h1><p>Build agents.</p>
-    <script>ignore me</script></main><footer>Footer</footer></body></html>"""
-    client = MockClient([MockResponse(content=html)])
-    monkeypatch.setattr("recruiter_agent.tools.read_webpage.httpx.Client", lambda **_: client)
+    page = MockPage(
+        title="Applied AI Engineer",
+        description="Build AI systems",
+        text="Role\nBuild agents.",
+        url="https://example.com/jobs/role",
+    )
+    context = MockBrowserContext(page)
+    browser = MockBrowser(context)
+    playwright = MockPlaywright(MockChromium(browser))
+    monkeypatch.setattr(
+        "recruiter_agent.tools.read_webpage.async_playwright",
+        lambda: MockPlaywrightManager(playwright),
+    )
     monkeypatch.setattr(
         "recruiter_agent.tools.read_webpage._validate_public_http_url", lambda _: None
     )
@@ -72,7 +118,8 @@ def test_extracts_main_page_content(monkeypatch: pytest.MonkeyPatch) -> None:
     assert page.description == "Build AI systems"
     assert page.text == "Role Build agents."
     assert page.final_url == "https://example.com/jobs/role"
-    assert "ignore me" not in page.text
+    assert context.closed
+    assert browser.closed
 
 
 def test_rejects_non_http_and_local_urls() -> None:
@@ -94,25 +141,31 @@ def test_rejects_custom_ports() -> None:
         get_page_url("https://example.com:8443/job")
 
 
-def test_redirect_destination_is_validated(monkeypatch: pytest.MonkeyPatch) -> None:
-    redirect = MockResponse(
-        status_code=302,
-        headers={"location": "http://127.0.0.1/admin"},
-        url="https://example.com/jobs/role",
+def test_navigation_route_rejects_private_redirects(monkeypatch: pytest.MonkeyPatch) -> None:
+    page = MockPage(title="Role", description=None, text="text", url="https://example.com/job")
+    context = MockBrowserContext(page)
+    browser = MockBrowser(context)
+    playwright = MockPlaywright(MockChromium(browser))
+    monkeypatch.setattr(
+        "recruiter_agent.tools.read_webpage.async_playwright",
+        lambda: MockPlaywrightManager(playwright),
     )
-    client = MockClient([redirect])
-    monkeypatch.setattr("recruiter_agent.tools.read_webpage.httpx.Client", lambda **_: client)
-    validated: list[str] = []
+    monkeypatch.setattr(
+        "recruiter_agent.tools.read_webpage._validate_public_http_url",
+        lambda url: (_ for _ in ()).throw(ValueError("private")) if "127.0.0.1" in url else None,
+    )
 
-    def validate(url: str) -> None:
-        validated.append(url)
-        if "127.0.0.1" in url:
-            raise ValueError("Private or non-public network addresses are not supported.")
+    get_page_url("https://example.com/jobs/role")
+    Route = type("Route", (), {"request": type("Request", (), {"url": "http://127.0.0.1/admin"})()})
+    action = {"aborted": False}
 
-    monkeypatch.setattr("recruiter_agent.tools.read_webpage._validate_public_http_url", validate)
+    async def abort(self):
+        action["aborted"] = True
 
-    with pytest.raises(ValueError, match="Private or non-public"):
-        get_page_url("https://example.com/jobs/role")
+    async def continue_route(self):
+        action["continued"] = True
 
-    assert len(validated) == 2
-    assert len(client.requests) == 1
+    Route.abort = abort
+    Route.continue_ = continue_route
+    asyncio.run(context.route_handler(Route()))
+    assert action["aborted"] is True

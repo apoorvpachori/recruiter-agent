@@ -78,8 +78,10 @@ class CriterionResult(StrictModel):
 
 
 class FitAssessment(StrictModel):
-    """Overall fit plus criterion-by-criterion results."""
+    """LLM recommendation with per-criterion evidence-backed assessments."""
 
     overall_status: FitStatus
     summary: str
     criteria: list[CriterionResult]
+    rationale: str = ""
+    confidence: str = "medium"
