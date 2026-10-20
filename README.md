@@ -14,6 +14,22 @@ uv run uvicorn recruiter_agent.main:app --reload
 
 The API will be available at <http://127.0.0.1:8000>. Check <http://127.0.0.1:8000/healthz> or open the interactive API docs at <http://127.0.0.1:8000/docs>.
 
+## Chat frontend
+
+The React/Vite single-page app lives in `frontend/`. In separate terminals, start FastAPI and Vite:
+
+```sh
+# Terminal 1: backend
+uv run uvicorn recruiter_agent.main:app --reload
+
+# Terminal 2: frontend
+cd frontend
+npm install
+npm run dev
+```
+
+Open <http://127.0.0.1:5173>. Vite proxies `/api/*` requests to FastAPI on port 8000, so the browser UI can call the existing agent endpoint without enabling broad CORS. Build the static frontend with `cd frontend && npm run build`; the output goes to ignored `frontend/dist/`.
+
 Run quality checks with:
 
 ```sh

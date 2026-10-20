@@ -115,6 +115,7 @@ def evaluate_job_fit(job: dict) -> dict:
         assessment = FitAssessment(
             overall_status=FitStatus.UNKNOWN,
             summary=page_issue,
+            rationale="No role-specific facts were available to assess.",
             criteria=[
                 CriterionResult(
                     criterion=field,
@@ -157,14 +158,15 @@ def evaluate_job_fit(job: dict) -> dict:
         source_url=page.final_url,
         **extraction.model_dump(),
     )
-    assessment = evaluate_fit(posting, load_profile())
+    assessment = evaluate_fit(posting, load_profile(), create_fireworks_model(settings))
     return {
         "job": posting.model_dump(mode="json"),
         "assessment": assessment.model_dump(mode="json"),
         "evaluation_instruction": (
-            "Report assessment.overall_status and assessment.summary verbatim as the fit result. "
-            "Do not override or upgrade the deterministic status with a manual judgment. "
+            "Report the LLM evaluator's overall_status, summary, rationale, and confidence. "
+            "Do not upgrade unknowns or clearance caveats with manual judgment. "
             "Use researched facts only if they are passed into a future evaluator version; "
-            "for this call, company search is context only and must not alter the assessment."
+            "for this call, company search is context only and must not alter the assessment. "
+            "Do not describe this evaluator as deterministic."
         ),
     }
