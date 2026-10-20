@@ -1,0 +1,8 @@
+# Jobs domain guidance
+
+- Keep job facts typed and attach evidence/source URLs to facts where possible.
+- Fit evaluation must be reproducible and deterministic for the same structured inputs/profile.
+- Distinguish `match`, `mismatch`, and `unknown`; unknown is not automatically a failure.
+- Overall fit may be provisional when no configured preference fails, but keep unresolved criteria visible.
+- Never clear a defense-company dealbreaker solely because a search found no evidence.
+- Keep the initial SQLite schema small. Add tables/fields only for concrete product needs and test migrations/schema behavior.

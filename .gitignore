@@ -24,6 +24,8 @@ data/*.json
 !data/example-profile.json
 *.sqlite
 *.sqlite3
+*.sqlite-journal
+*.sqlite3-journal
 *.db
 checkpoints/
 resumes/

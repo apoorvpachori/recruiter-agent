@@ -3,20 +3,31 @@
 import logging
 import time
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from starlette.responses import Response
 
 from recruiter_agent.api.router import api_router
+from recruiter_agent.database import create_schema
 from recruiter_agent.logging_config import configure_logging
 
 configure_logging()
 logger = logging.getLogger(__name__)
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Initialize the minimal local SQLite schema at application startup."""
+    create_schema()
+    yield
+
+
 app = FastAPI(
     title="Recruiter Agent",
     description="A personal AI job-search copilot.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 app.include_router(api_router)
 

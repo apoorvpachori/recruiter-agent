@@ -15,6 +15,7 @@ from recruiter_agent.jobs.models import (
     JobPageExtraction,
     JobPosting,
 )
+from recruiter_agent.jobs.sql_access import get_jobs_schema, run_jobs_sql
 from recruiter_agent.profile.loader import load_profile
 from recruiter_agent.providers.brave_search import BraveSearchProvider
 from recruiter_agent.providers.fireworks import create_fireworks_model
@@ -81,6 +82,26 @@ def search_company_web(query: str) -> dict:
             "results": [],
         }
     return {"ok": True, **result.model_dump(mode="json")}
+
+
+@tool
+def get_database_schema() -> dict:
+    """Inspect the local jobs table columns and their meanings."""
+    return get_jobs_schema()
+
+
+@tool
+def query_jobs_database(sql: str) -> dict:
+    """Run a read-only SELECT against the local jobs table.
+
+    Only the jobs table is available. SELECT only, one statement, maximum 100 rows.
+    To add or change a tracked job, ask the user and use the jobs API; this SQL tool
+    cannot write, delete, or modify database contents.
+
+    Args:
+        sql: A read-only SELECT statement referencing only the jobs table.
+    """
+    return run_jobs_sql(sql)
 
 
 @tool

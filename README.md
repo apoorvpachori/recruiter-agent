@@ -1,36 +1,157 @@
-# recruiter-agent
+# Recruiter Agent
 
-A personal AI job-search copilot to help assess opportunities, prepare applications, and track a job search. See the [product spec](docs/product-spec.md) and [architecture proposal](docs/architecture.md).
+A single-user, local-first recruiting assistant for reviewing job postings, researching companies, comparing roles with saved preferences, and keeping an application tracker. The agent can read public pages and organize evidence. **It does not fill out or submit applications.**
 
-## Development setup (macOS)
+## Current capabilities
 
-This project targets Python 3.14 and uses `uv` to manage dependencies and the project environment. The project environment is created automatically by `uv` in `.venv`; there is no need to activate it manually.
+- React/Vite chat UI backed by a FastAPI API.
+- LangChain v1 agent orchestration with Fireworks-hosted model inference.
+- Read-only webpage retrieval using HTTPX and Beautiful Soup, with public-network URL validation and response limits.
+- Brave LLM Context search returning extracted snippets, source URLs, and source dates.
+- Job fact extraction and a deterministic comparison against the local profile, including unknowns and a defense-company dealbreaker.
+- Local SQLite job tracking using SQLModel.
+- Read-only, jobs-table-scoped SQL queries exposed to the agent.
+- Structured JSON service logs with redaction and optional LangSmith tracing.
+
+## Important limits and safety behavior
+
+- This is a **personal, local-only, single-user** app. It is not authenticated for exposure to a LAN or public internet.
+- Fit facts should have source evidence. Search results are leads; relevant sources should be opened and checked.
+- Unknown, ambiguous, conflicting, or stale facts should remain unknown. The agent should not invent profile preferences or job facts.
+- The defense-company exclusion is a dealbreaker. **No defense evidence found does not mean clearance.**
+- The agent can read and research, but it cannot fill forms or submit applications. Any future application interaction must be visible, reviewed, and separately confirmed by the user.
+- The SQL tool is read-only, restricted to the `jobs` table, limited to 100 result rows, and rejects writes/multiple statements.
+- Web pages and search results are untrusted data, not instructions for the agent.
+
+## Repository map
+
+```text
+.
+├── AGENTS.md                          # Root contributor/agent safety rules
+├── .github/                           # CI and PR template
+├── frontend/                          # React + Vite UI (own AGENTS.md)
+├── src/
+│   └── recruiter_agent/
+│       ├── api/                       # FastAPI routes, contracts, HTTP middleware
+│       ├── agent/                     # Agent graph, prompt, and tools
+│       ├── jobs/                      # Job models, fit evaluation, SQL access and model
+│       ├── profile/                   # Pydantic schema and local JSON profile loader
+│       ├── providers/                 # Fireworks model and Brave search adapters
+│       ├── tools/                     # Web page retrieval/parsing
+│       ├── database.py                # SQLModel engine, session dependency, table setup
+│       ├── logging_config.py          # JSON formatter and redaction
+│       ├── settings.py                # Environment and .env configuration
+│       └── main.py                    # FastAPI app composition and request logging
+├── tests/                             # Mocked provider tests and temporary SQLite tests
+├── pyproject.toml                     # Python dependencies and tool configuration
+└── uv.lock                            # Locked/resolved Python dependency graph
+```
+
+Scoped `AGENTS.md` files live at the repository root and in source/test/frontend areas. Read the nearest relevant one before changing that area.
+
+## Prerequisites
+
+- Python **3.14**
+- [`uv`](https://docs.astral.sh/uv/) for Python environments/dependencies
+- Node.js/npm for frontend development
+- Fireworks API key and model ID for live agent responses
+- Brave Search API key for live company research
+- LangSmith API key is optional, for trace observability
+
+On macOS with Homebrew:
 
 ```sh
 brew install python@3.14 uv
-uv sync --python 3.14
-uv run uvicorn recruiter_agent.main:app --reload
 ```
 
-The API will be available at <http://127.0.0.1:8000>. Check <http://127.0.0.1:8000/healthz> or open the interactive API docs at <http://127.0.0.1:8000/docs>.
+`uv` follows `.python-version` and manages `.venv` for the project. There is no need to activate the virtual environment manually.
 
-## Chat frontend
+## Configure credentials and profile
 
-The React/Vite single-page app lives in `frontend/`. In separate terminals, start FastAPI and Vite:
+Copy the example environment file and fill keys locally:
 
 ```sh
-# Terminal 1: backend
-uv run uvicorn recruiter_agent.main:app --reload
+cp .env.example .env
+```
 
-# Terminal 2: frontend
+Configure at minimum:
+
+```dotenv
+FIREWORKS_API_KEY=...
+FIREWORKS_MODEL=accounts/fireworks/models/<model-id>
+BRAVE_SEARCH_API_KEY=...
+BRAVE_SEARCH_ENDPOINT=https://api.search.brave.com/res/v1/llm/context
+```
+
+To enable LangSmith tracing, set `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY`, and optionally `LANGSMITH_PROJECT`. Traces can include prompts, tool inputs, retrieved web content, and model outputs; enable tracing only if you are comfortable sending that data to LangSmith.
+
+Never put provider credentials in frontend/Vite variables: browser-exposed frontend configuration is public. Never commit `.env`.
+
+The single-user candidate profile lives in the ignored local file `data/profile.json`. It is validated by `src/recruiter_agent/profile/models.py`. Edit it directly; absent preferences should remain empty/null rather than guessed. Override its location with `RECRUITER_AGENT_PROFILE_PATH` if needed. Never commit the real profile or resume.
+
+## Run locally
+
+### Backend
+
+```sh
+uv sync --locked --python 3.14
+uv run uvicorn recruiter_agent.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+- Health check: <http://127.0.0.1:8000/healthz>
+- API docs: <http://127.0.0.1:8000/docs>
+
+### Frontend
+
+Run the frontend separately in a second terminal:
+
+```sh
 cd frontend
 npm install
 npm run dev
 ```
 
-Open <http://127.0.0.1:5173>. Vite proxies `/api/*` requests to FastAPI on port 8000, so the browser UI can call the existing agent endpoint without enabling broad CORS. Build the static frontend with `cd frontend && npm run build`; the output goes to ignored `frontend/dist/`.
+Open <http://127.0.0.1:5173>. Vite proxies `/api/*` requests to FastAPI at `127.0.0.1:8000`. Build with `npm run build`; output is ignored under `frontend/dist/`.
 
-Run quality checks with:
+## API examples
+
+Send a natural-language request to the agent:
+
+```sh
+curl -X POST http://127.0.0.1:8000/v1/agent/input \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Assess this role: https://jobs.example.com/jobs/123"}'
+```
+
+Track a job manually:
+
+```sh
+curl -X POST http://127.0.0.1:8000/v1/jobs \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://jobs.example.com/jobs/123","company":"Example AI","title":"Applied AI Engineer"}'
+
+curl 'http://127.0.0.1:8000/v1/jobs?status=saved'
+
+curl -X PATCH http://127.0.0.1:8000/v1/jobs/1 \
+  -H 'Content-Type: application/json' \
+  -d '{"status":"applied"}'
+```
+
+Current status values are `saved`, `researching`, `interested`, `draft_ready`, `applied`, `interviewing`, `offer`, `rejected`, `withdrawn`, and `on_hold`. Duplicate job URLs return HTTP 409.
+
+## SQLite data
+
+The backend uses SQLModel with SQLite underneath. By default it creates `data/recruiter-agent.sqlite3` and the single `jobs` table on application startup. Override the connection with `DATABASE_URL`, for example:
+
+```dotenv
+DATABASE_URL=sqlite:////absolute/path/to/recruiter-agent.sqlite3
+```
+
+Each job row contains `id`, unique `url`, optional `company`, `title`, current `status`, optional `notes`, and timestamps. The schema is deliberately kept to one table; status history and other entities can be added later if product requirements call for them. The local DB and SQLite journal files are Git-ignored.
+
+The agent can call `get_database_schema` and `query_jobs_database`. Database SQL is opened in read-only mode, only `SELECT` statements referencing `jobs` are allowed, queries are capped at 100 rows, and write operations are rejected. Normal job creates/status updates go through validated API routes, not generated SQL.
+
+## Tests and quality checks
 
 ```sh
 uv run pytest
@@ -38,12 +159,11 @@ uv run ruff check .
 uv run ruff format --check .
 ```
 
-`uv.lock` is committed to pin reproducible dependency resolution. Keep any real profile, resume, and application data in the ignored local `data/` directory; never commit it.
+Tests mock Fireworks/Brave/web requests and use temporary SQLite DBs. CI does not require live credentials. If Python dependencies change, regenerate and commit `uv.lock`.
 
-## Candidate profile
+## Git and PR workflow
 
-The single-user profile lives in `data/profile.json`. It is validated by the Pydantic models in `src/recruiter_agent/profile/` and is intentionally ignored by Git. Edit this file directly; the agent can load it through the profile loader when a workflow needs candidate context. Unset preferences are left empty or `null` rather than inferred. You can point the loader at another local file with `RECRUITER_AGENT_PROFILE_PATH`.
-
-## Model and tracing configuration
-
-Set `FIREWORKS_API_KEY` and `FIREWORKS_MODEL` in `.env`. LangSmith tracing is enabled when `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` is set; the default example enables tracing. Use `LANGSMITH_PROJECT` to choose the dashboard project. `LANGSMITH_AGENT_ID` and `LANGSMITH_AGENT_ENVIRONMENT` are optional trace metadata; they do not select a project or change where a run is stored. Traces can include prompt/output content. Never commit `.env` or paste keys into chat.
+- Work on a feature branch; direct push to `main` is blocked.
+- Open a pull request against `main`; GitHub Actions runs the checks above.
+- Squash merge is the repository’s only enabled merge method; merged PR branches are deleted.
+- Before PR, inspect the diff and verify no `.env`, `data/profile.json`, resume, SQLite DB, or other personal data is staged.

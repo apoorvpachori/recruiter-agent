@@ -13,13 +13,14 @@ _SENSITIVE_KEY_PATTERN = re.compile(
     r"prompt|input|output|content|text|answer|profile)",
     re.IGNORECASE,
 )
+_SAFE_NUMERIC_KEY_PATTERN = re.compile(r"^(text_length|message_count|duration_ms|status_code)$")
 _URL_PATTERN = re.compile(r"https?://[^\s\"'<>]+", re.IGNORECASE)
 _BEARER_PATTERN = re.compile(r"(?i)\bBearer\s+[^\s,;]+")
 
 
 def redact(value: Any, *, key: str | None = None) -> Any:
     """Redact sensitive structured fields and credentials from log data."""
-    if key and _SENSITIVE_KEY_PATTERN.search(key):
+    if key and _SENSITIVE_KEY_PATTERN.search(key) and not _SAFE_NUMERIC_KEY_PATTERN.fullmatch(key):
         return REDACTED
     if isinstance(value, dict):
         return {
