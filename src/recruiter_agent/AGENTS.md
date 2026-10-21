@@ -1,5 +1,7 @@
 # Backend package guidance
 
+- Follow the repository workflow in `CONTRIBUTING.md`; update relevant documentation and agent guidance in the same change.
+
 - `api/` handles HTTP validation/status codes only; call services for business operations.
 - `agent/` orchestrates tools and formats user-facing answers; it must not bypass tool/service validation.
 - `jobs/` owns job records and deterministic fit evaluation.

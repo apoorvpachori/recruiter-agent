@@ -1,8 +1,12 @@
 # Repository guidance
 
+Follow the repository workflow and contribution requirements in [`CONTRIBUTING.md`](CONTRIBUTING.md), including keeping relevant documentation, `AGENTS.md` files, and architecture pages current in the same change.
+
 ## Project intent
 
 This is a single-user, local-first recruiting assistant. Keep the first release simple, explainable, and privacy-conscious. The agent may read public job/company pages and compare supported facts to the local profile; it must not submit applications or claim actions it did not perform.
+
+Before changing component boundaries, data flow, persistence, or agent capabilities, read [`docs/architecture/README.md`](docs/architecture/README.md) and the relevant architecture pages. Architecture changes must update those pages in the same change. If docs and code disagree, treat the code as current behavior, then correct the docs as part of the change.
 
 ## Layout
 
@@ -14,6 +18,7 @@ This is a single-user, local-first recruiting assistant. Keep the first release 
 - `src/recruiter_agent/tools/`: reusable webpage fetch and parsing utilities.
 - `tests/`: pytest suite, using temporary SQLite databases and mocked provider calls.
 - `frontend/`: React/Vite application.
+- `docs/architecture/`: canonical architecture guide for humans and coding agents.
 
 ## Safety and privacy
 

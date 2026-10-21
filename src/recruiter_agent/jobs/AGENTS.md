@@ -1,5 +1,7 @@
 # Jobs domain guidance
 
+- Follow the repository workflow in `CONTRIBUTING.md`; update relevant documentation and agent guidance in the same change.
+
 - Keep job facts typed and attach evidence/source URLs to facts where possible.
 - Fit evaluation must be reproducible and deterministic for the same structured inputs/profile.
 - Distinguish `match`, `mismatch`, and `unknown`; unknown is not automatically a failure.

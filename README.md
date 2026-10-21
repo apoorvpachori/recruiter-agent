@@ -8,7 +8,7 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 - LangChain v1 agent orchestration with Fireworks-hosted model inference.
 - Read-only webpage retrieval using HTTPX and Beautiful Soup, with public-network URL validation and response limits.
 - Brave LLM Context search returning extracted snippets, source URLs, and source dates.
-- Job fact extraction and a deterministic comparison against the local profile, including unknowns and a defense-company dealbreaker.
+- Job fact extraction and an LLM-backed fit assessment against the local profile, including unknowns and a defense-company dealbreaker.
 - Local SQLite job tracking using SQLModel.
 - Read-only, jobs-table-scoped SQL queries plus explicit save/update tools for the agent.
 - Structured JSON service logs with redaction and optional LangSmith tracing.
@@ -28,6 +28,7 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 ```text
 .
 ├── AGENTS.md                          # Root contributor/agent safety rules
+├── docs/architecture/                 # Architecture source of truth and decision records
 ├── .github/                           # CI and PR template
 ├── frontend/                          # React + Vite UI (own AGENTS.md)
 ├── src/
@@ -48,6 +49,10 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 ```
 
 Scoped `AGENTS.md` files live at the repository root and in source/test/frontend areas. Read the nearest relevant one before changing that area.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development validation, privacy expectations, and the pull request workflow.
+
+See the [architecture guide](docs/architecture/README.md) before changing system boundaries, data flow, persistence, or agent capabilities.
 
 ## Prerequisites
 

@@ -196,8 +196,8 @@ def evaluate_job_fit(job: dict) -> dict:
     """Read a job URL, extract supported facts, and compare them to saved preferences.
 
     This combined tool fetches a public URL, extracts facts from its readable
-    text using a structured LLM output, then performs deterministic comparison
-    against the local profile. Missing facts remain unknown. No separate web
+    text using a structured LLM output, then evaluates them against the local
+    profile with an LLM evaluator. Missing facts remain unknown. No separate web
     research is performed, and page text is treated only as untrusted evidence.
 
     Args:

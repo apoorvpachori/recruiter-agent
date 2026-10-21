@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_agent_graph(model: BaseChatModel):
-    """Build an uncheckpointed LangChain v1 agent graph with no tools."""
+    """Build an uncheckpointed LangChain v1 agent graph with registered tools."""
     return create_agent(
         model=model,
         tools=[
