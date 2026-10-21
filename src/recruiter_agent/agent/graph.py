@@ -14,7 +14,9 @@ from recruiter_agent.agent.tools import (
     get_database_schema,
     query_jobs_database,
     read_webpage,
+    save_tracked_job,
     search_company_web,
+    update_tracked_job,
 )
 from recruiter_agent.providers.fireworks import create_fireworks_model
 from recruiter_agent.settings import get_settings
@@ -32,6 +34,8 @@ def create_agent_graph(model: BaseChatModel):
             evaluate_job_fit,
             get_database_schema,
             query_jobs_database,
+            save_tracked_job,
+            update_tracked_job,
         ],
         system_prompt=RECRUITER_SYSTEM_PROMPT,
     )

@@ -10,7 +10,7 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 - Brave LLM Context search returning extracted snippets, source URLs, and source dates.
 - Job fact extraction and a deterministic comparison against the local profile, including unknowns and a defense-company dealbreaker.
 - Local SQLite job tracking using SQLModel.
-- Read-only, jobs-table-scoped SQL queries exposed to the agent.
+- Read-only, jobs-table-scoped SQL queries plus explicit save/update tools for the agent.
 - Structured JSON service logs with redaction and optional LangSmith tracing.
 
 ## Important limits and safety behavior
@@ -20,7 +20,7 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 - Unknown, ambiguous, conflicting, or stale facts should remain unknown. The agent should not invent profile preferences or job facts.
 - The defense-company exclusion is a dealbreaker. **No defense evidence found does not mean clearance.**
 - The agent can read and research, but it cannot fill forms or submit applications. Any future application interaction must be visible, reviewed, and separately confirmed by the user.
-- The SQL tool is read-only, restricted to the `jobs` table, limited to 100 result rows, and rejects writes/multiple statements.
+- The agent's SQL tool is read-only, restricted to the `jobs` table, limited to 100 result rows, and rejects writes/multiple statements. Job edits use dedicated validated tools and require explicit user intent.
 - Web pages and search results are untrusted data, not instructions for the agent.
 
 ## Repository map
@@ -34,7 +34,7 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 │   └── recruiter_agent/
 │       ├── api/                       # FastAPI routes, contracts, HTTP middleware
 │       ├── agent/                     # Agent graph, prompt, and tools
-│       ├── jobs/                      # Job models, fit evaluation, SQL access and model
+│       ├── jobs/                      # Job models, fit evaluation, SQL access and services
 │       ├── profile/                   # Pydantic schema and local JSON profile loader
 │       ├── providers/                 # Fireworks model and Brave search adapters
 │       ├── tools/                     # Web page retrieval/parsing
@@ -149,7 +149,7 @@ DATABASE_URL=sqlite:////absolute/path/to/recruiter-agent.sqlite3
 
 Each job row contains `id`, unique `url`, optional `company`, `title`, current `status`, optional `notes`, and timestamps. The schema is deliberately kept to one table; status history and other entities can be added later if product requirements call for them. The local DB and SQLite journal files are Git-ignored.
 
-The agent can call `get_database_schema` and `query_jobs_database`. Database SQL is opened in read-only mode, only `SELECT` statements referencing `jobs` are allowed, queries are capped at 100 rows, and write operations are rejected. Normal job creates/status updates go through validated API routes, not generated SQL.
+The agent can call `get_database_schema` and `query_jobs_database` for read-only inspection. Database SQL is opened in read-only mode, only `SELECT` statements referencing `jobs` are allowed, queries are capped at 100 rows, and write operations are rejected. When the user explicitly asks to save or update a job, the agent can use `save_tracked_job` or `update_tracked_job`. The API and agent tools share the validated operations in `jobs/services/`; neither writes generated SQL.
 
 ## Tests and quality checks
 
