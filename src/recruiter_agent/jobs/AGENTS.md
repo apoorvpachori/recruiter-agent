@@ -6,3 +6,5 @@
 - Overall fit may be provisional when no configured preference fails, but keep unresolved criteria visible.
 - Never clear a defense-company dealbreaker solely because a search found no evidence.
 - Keep the initial SQLite schema small. Add tables/fields only for concrete product needs and test migrations/schema behavior.
+- Put shared persistence operations and input validation in `services/`; API routes and agent tools
+  should call those services rather than duplicate database writes.

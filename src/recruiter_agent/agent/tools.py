@@ -5,7 +5,9 @@ from urllib.parse import urlsplit
 
 import httpx
 from langchain_core.tools import tool
+from sqlmodel import Session
 
+from recruiter_agent.database import get_engine
 from recruiter_agent.jobs.fit import evaluate_fit
 from recruiter_agent.jobs.models import (
     CriterionResult,
@@ -15,6 +17,14 @@ from recruiter_agent.jobs.models import (
     JobPageExtraction,
     JobPosting,
 )
+from recruiter_agent.jobs.repository import JobStatus
+from recruiter_agent.jobs.services.jobs import (
+    JobAlreadyExistsError,
+    JobNotFoundError,
+    create_job as create_job_record,
+    update_job as update_job_record,
+)
+from recruiter_agent.jobs.services.schemas import JobCreate, JobUpdate
 from recruiter_agent.jobs.sql_access import get_jobs_schema, run_jobs_sql
 from recruiter_agent.profile.loader import load_profile
 from recruiter_agent.providers.brave_search import BraveSearchProvider
@@ -95,13 +105,86 @@ def query_jobs_database(sql: str) -> dict:
     """Run a read-only SELECT against the local jobs table.
 
     Only the jobs table is available. SELECT only, one statement, maximum 100 rows.
-    To add or change a tracked job, ask the user and use the jobs API; this SQL tool
-    cannot write, delete, or modify database contents.
+    To change a tracked job, use the dedicated validated job tools when the user
+    has explicitly requested the change. This SQL tool cannot write or delete.
 
     Args:
         sql: A read-only SELECT statement referencing only the jobs table.
     """
     return run_jobs_sql(sql)
+
+
+@tool
+def save_tracked_job(
+    url: str,
+    company: str | None = None,
+    title: str | None = None,
+    status: JobStatus = JobStatus.SAVED,
+    notes: str | None = None,
+) -> dict:
+    """Add a job to the local tracker after the user explicitly asks to save it.
+
+    Duplicate URLs are rejected. The URL, status, and field constraints use the
+    same validation and persistence service as the jobs API.
+    """
+    try:
+        payload = JobCreate.model_validate(
+            {
+                "url": url,
+                "company": company,
+                "title": title,
+                "status": status,
+                "notes": notes,
+            }
+        )
+        with Session(get_engine()) as session:
+            job = create_job_record(session, payload)
+    except JobAlreadyExistsError:
+        return {"ok": False, "error": "A job with this URL is already tracked."}
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    logger.info("agent_job_created", extra={"event": "agent_job_created", "job_id": job.id})
+    return {"ok": True, "job": job.model_dump(mode="json")}
+
+
+@tool
+def update_tracked_job(
+    job_id: int,
+    url: str | None = None,
+    company: str | None = None,
+    title: str | None = None,
+    status: JobStatus | None = None,
+    notes: str | None = None,
+) -> dict:
+    """Update a tracked job after the user explicitly requests the change.
+
+    Supply only fields the user asked to change. This tool shares validation,
+    duplicate handling, and persistence behavior with the jobs API. Null values
+    are treated as omitted; clearing a field is not supported through this tool.
+    """
+    values = {
+        key: value
+        for key, value in {
+            "url": url,
+            "company": company,
+            "title": title,
+            "status": status,
+            "notes": notes,
+        }.items()
+        if value is not None
+    }
+    try:
+        payload = JobUpdate.model_validate(values)
+        with Session(get_engine()) as session:
+            job = update_job_record(session, job_id, payload)
+    except JobAlreadyExistsError:
+        return {"ok": False, "error": "A job with this URL is already tracked."}
+    except JobNotFoundError:
+        return {"ok": False, "error": "Tracked job not found."}
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    logger.info("agent_job_updated", extra={"event": "agent_job_updated", "job_id": job.id})
+    return {"ok": True, "job": job.model_dump(mode="json")}
 
 
 @tool
