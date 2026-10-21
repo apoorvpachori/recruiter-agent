@@ -32,7 +32,7 @@ class JobUpdate(SQLModel):
     notes: str | None = None
 
     @model_validator(mode="after")
-    def require_a_change(self) -> "JobUpdate":
+    def require_a_change(self) -> JobUpdate:
         if not self.model_fields_set:
             raise ValueError("At least one job field must be provided.")
         if "url" in self.model_fields_set and self.url is None:

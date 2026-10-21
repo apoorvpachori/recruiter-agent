@@ -21,7 +21,11 @@ from recruiter_agent.jobs.repository import JobStatus
 from recruiter_agent.jobs.services.jobs import (
     JobAlreadyExistsError,
     JobNotFoundError,
+)
+from recruiter_agent.jobs.services.jobs import (
     create_job as create_job_record,
+)
+from recruiter_agent.jobs.services.jobs import (
     update_job as update_job_record,
 )
 from recruiter_agent.jobs.services.schemas import JobCreate, JobUpdate
