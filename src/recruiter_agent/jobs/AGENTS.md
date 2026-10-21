@@ -3,7 +3,7 @@
 - Follow the repository workflow in `CONTRIBUTING.md`; update relevant documentation and agent guidance in the same change.
 
 - Keep job facts typed and attach evidence/source URLs to facts where possible.
-- Fit evaluation must be reproducible and deterministic for the same structured inputs/profile.
+- Fit evaluation is LLM-backed and may vary for the same inputs; deterministic safeguards in the domain layer must preserve unknowns and enforce the defense-company dealbreaker.
 - Distinguish `match`, `mismatch`, and `unknown`; unknown is not automatically a failure.
 - Overall fit may be provisional when no configured preference fails, but keep unresolved criteria visible.
 - Never clear a defense-company dealbreaker solely because a search found no evidence.
