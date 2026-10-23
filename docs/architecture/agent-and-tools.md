@@ -41,4 +41,10 @@ No tool may fill or submit an application. Any future consequential external act
 
 LangSmith tracing is optional and disabled by default. When enabled, traces may contain prompts, tool inputs, retrieved web content, and model output. Treat enabling it as sending that data to an external service; document data exposure and retention implications before changing trace payloads or defaults.
 
+## Evaluation runner
+
+The local eval runner lives in `src/recruiter_agent/evals/` with synthetic JSONL scenarios in `evals/cases/`. It invokes the production agent graph and tool definitions with scripted model responses, fixture-only web/search/model adapters, and a fresh temporary SQLite database per case. The single runner command is offline by default and disables LangSmith tracing. Every run prints checks, tool calls/results, and responses, then writes `.eval-results/latest.md`. `EVAL_JUDGE_ENABLED=true` opts into Fireworks-based scoring of synthetic outputs.
+
+Deterministic hard graders check required/forbidden tool calls, selected response constraints, and tracked-job state. An opt-in LLM judge scores relevance, evidence grounding, and uncertainty calibration; its score cannot override hard-check failures. See [evaluations](evaluations.md) for commands and data-handling details.
+
 Implementation entry points: [`graph.py`](../../src/recruiter_agent/agent/graph.py), [`prompts.py`](../../src/recruiter_agent/agent/prompts.py), [`tools.py`](../../src/recruiter_agent/agent/tools.py), and [`sql_access.py`](../../src/recruiter_agent/jobs/sql_access.py).

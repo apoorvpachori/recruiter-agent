@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     fireworks_api_key: SecretStr | None = None
     fireworks_model: str | None = None
+    eval_judge_enabled: bool = False
     brave_search_api_key: SecretStr | None = None
     brave_search_endpoint: str = "https://api.search.brave.com/res/v1/llm/context"
     database_url: str = "sqlite:///./data/recruiter-agent.sqlite3"
