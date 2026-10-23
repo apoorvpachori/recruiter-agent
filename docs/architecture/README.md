@@ -8,6 +8,7 @@ This directory is the repository's canonical description of system structure, da
 - [Agent and tools](agent-and-tools.md): orchestration, tool contracts, evidence handling, and write permissions.
 - [Data and persistence](data-and-persistence.md): profile and job data ownership, validation, and database access.
 - [Security and privacy](security-and-privacy.md): trust boundaries, sensitive data, logging, and external services.
+- [Evaluations](evaluations.md): local synthetic scenarios, deterministic graders, and report handling.
 - [Architecture decisions](decisions/README.md): concise records for decisions that affect future design.
 
 ## Non-negotiable invariants

@@ -53,6 +53,8 @@ npm run build
 
 Tests should be deterministic. Mock Fireworks, Brave, and webpage calls by default; use temporary SQLite databases for persistence tests. Do not require live credentials or access the real local profile/database in tests. If a check cannot be run, say so in the PR description and explain why.
 
+For agent behavior regressions, see [`evals/README.md`](evals/README.md). The single-command eval runner is offline by default and always prints and saves per-case output. `EVAL_JUDGE_ENABLED=true` opts into Fireworks-based judging of synthetic cases.
+
 ## Branches and pull requests
 
 - Work on a feature branch; do not push directly to `main`.

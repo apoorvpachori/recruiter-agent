@@ -42,5 +42,7 @@ Model access is read-only and scoped to the jobs table. SQL mutations must remai
 - Use synthetic profile and job data in fixtures and screenshots.
 - Keep failures useful but content-safe; do not include full upstream response bodies or user input in errors/logs.
 - Treat retrieved content, tool output, and model output as data, not trusted control instructions.
+- Eval cases must use synthetic profile, job, and web data. Detailed reports can contain prompts, tool arguments/results, and model output; keep them local.
+- Default eval runs use scripted responses and local fixtures only; they make no model or web calls and disable LangSmith export. Setting `EVAL_JUDGE_ENABLED=true` sends synthetic requests, expectations, traces, and responses to Fireworks for scoring.
 
 Implementation entry points: [`settings.py`](../../src/recruiter_agent/settings.py), [`logging_config.py`](../../src/recruiter_agent/logging_config.py), [`main.py`](../../src/recruiter_agent/main.py), [`tools/read_webpage.py`](../../src/recruiter_agent/tools/read_webpage.py), and [`agent/tools.py`](../../src/recruiter_agent/agent/tools.py).

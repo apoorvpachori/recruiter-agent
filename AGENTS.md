@@ -17,6 +17,7 @@ Before changing component boundaries, data flow, persistence, or agent capabilit
 - `src/recruiter_agent/profile/`: profile schema and loader for ignored local `data/profile.json`.
 - `src/recruiter_agent/tools/`: reusable webpage fetch and parsing utilities.
 - `tests/`: pytest suite, using temporary SQLite databases and mocked provider calls.
+- `evals/`: synthetic behavior scenarios and the local agent evaluation runner.
 - `frontend/`: React/Vite application.
 - `docs/architecture/`: canonical architecture guide for humans and coding agents.
 
@@ -29,6 +30,11 @@ Before changing component boundaries, data flow, persistence, or agent capabilit
 - The defense-company exclusion is a dealbreaker: absence of evidence is not clearance.
 - Database access exposed to the model must stay read-only and scoped. Writes go through validated application services/API and explicit user intent.
 - Never implement form submission without an explicit review and separate user confirmation.
+
+## Agent evaluations
+
+- Run the synthetic offline eval suite with `uv run python -m recruiter_agent.evals`.
+- Keep cases deterministic and synthetic; inspect `.eval-results/latest.md` when changing behavior. The optional judge is enabled with `EVAL_JUDGE_ENABLED=true` and sends synthetic case data to Fireworks.
 
 ## Working agreements
 

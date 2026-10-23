@@ -29,6 +29,7 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 .
 ├── AGENTS.md                          # Root contributor/agent safety rules
 ├── docs/architecture/                 # Architecture source of truth and decision records
+├── evals/                              # Synthetic agent eval cases and local runner guide
 ├── .github/                           # CI and PR template
 ├── frontend/                          # React + Vite UI (own AGENTS.md)
 ├── src/
@@ -165,6 +166,10 @@ uv run ruff format --check .
 ```
 
 Tests mock Fireworks/Brave/web requests and use temporary SQLite DBs. CI does not require live credentials. If Python dependencies change, regenerate and commit `uv.lock`.
+
+## Agent evaluations
+
+Run the synthetic agent scenarios with `uv run python -m recruiter_agent.evals`. It prints tool activity and final responses, then writes `.eval-results/latest.md`. Enable `EVAL_JUDGE_ENABLED=true` in `.env` to score outputs with the configured Fireworks model; see [evals/README.md](evals/README.md) for details.
 
 ## Git and PR workflow
 
