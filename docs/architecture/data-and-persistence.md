@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | Candidate profile | `profile/` | Local ignored JSON file; loaded and validated when fit evaluation runs |
 | Tracked jobs | `jobs/` | Local SQLite `jobs` table; current status and notes are stored per job |
+| Ashby application drafts and selected files | `applications/` | Process memory and a short-lived browser session (20 minutes); cleared after submit, expiry, or shutdown |
 | Conversation history | None | Not persisted by the current backend or agent graph |
 | Provider credentials and configuration | `settings.py` | Environment or ignored `.env`; never frontend configuration |
 

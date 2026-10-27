@@ -1,6 +1,6 @@
 # Recruiter Agent
 
-A single-user, local-first recruiting assistant for reviewing job postings, researching companies, comparing roles with saved preferences, and keeping an application tracker. The agent can read public pages and organize evidence. **It does not fill out or submit applications.**
+A single-user, local-first recruiting assistant for reviewing job postings, researching companies, comparing roles with saved preferences, and keeping an application tracker. The agent can read public pages and organize evidence. A separate Ashby application workflow can prepare and submit a reviewed form after the user explicitly confirms.
 
 ## Current capabilities
 
@@ -10,6 +10,7 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 - Brave LLM Context search returning extracted snippets, source URLs, and source dates.
 - Job fact extraction and an LLM-backed fit assessment against the local profile, including unknowns and a defense-company dealbreaker.
 - Local SQLite job tracking using SQLModel.
+- Ashby-hosted application preparation with exact contact-field prefilling, editable answer review, optional resume attachment, and separate user confirmation before one-time submission.
 - Read-only, jobs-table-scoped SQL queries plus explicit save/update tools for the agent.
 - Structured JSON service logs with redaction and optional LangSmith tracing.
 
@@ -19,7 +20,7 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 - Fit facts should have source evidence. Search results are leads; relevant sources should be opened and checked.
 - Unknown, ambiguous, conflicting, or stale facts should remain unknown. The agent should not invent profile preferences or job facts.
 - The defense-company exclusion is a dealbreaker. **No defense evidence found does not mean clearance.**
-- The agent can read and research, but it cannot fill forms or submit applications. Any future application interaction must be visible, reviewed, and separately confirmed by the user.
+- The agent itself cannot fill forms or submit applications. The separate Ashby flow supports only public `jobs.ashbyhq.com` pages; it shows every supported field for review and requires a separate confirmation. Form values and chosen files stay in process memory until confirmation, and the tracker is marked applied only after a success message.
 - The agent's SQL tool is read-only, restricted to the `jobs` table, limited to 100 result rows, and rejects writes/multiple statements. Job edits use dedicated validated tools and require explicit user intent.
 - Web pages and search results are untrusted data, not instructions for the agent.
 
@@ -36,6 +37,7 @@ A single-user, local-first recruiting assistant for reviewing job postings, rese
 │   └── recruiter_agent/
 │       ├── api/                       # FastAPI routes, contracts, HTTP middleware
 │       ├── agent/                     # Agent graph, prompt, and tools
+│       ├── applications/              # User-reviewed Ashby drafts and restricted browser adapter
 │       ├── jobs/                      # Job models, fit evaluation, SQL access and services
 │       ├── profile/                   # Pydantic schema and local JSON profile loader
 │       ├── providers/                 # Fireworks model and Brave search adapters
@@ -54,6 +56,8 @@ Scoped `AGENTS.md` files live at the repository root and in source/test/frontend
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development validation, privacy expectations, and the pull request workflow.
 
 See the [architecture guide](docs/architecture/README.md) before changing system boundaries, data flow, persistence, or agent capabilities.
+
+The Ashby flow and its safety boundaries are described in [the application architecture page](docs/architecture/applications.md).
 
 ## Prerequisites
 
@@ -102,6 +106,12 @@ The single-user candidate profile lives in the ignored local file `data/profile.
 ```sh
 uv sync --locked --python 3.14
 uv run uvicorn recruiter_agent.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+For Ashby applications, install Playwright's Chromium browser once:
+
+```sh
+uv run playwright install chromium
 ```
 
 - Health check: <http://127.0.0.1:8000/healthz>

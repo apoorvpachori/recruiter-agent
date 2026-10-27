@@ -4,7 +4,7 @@ Follow the repository workflow and contribution requirements in [`CONTRIBUTING.m
 
 ## Project intent
 
-This is a single-user, local-first recruiting assistant. Keep the first release simple, explainable, and privacy-conscious. The agent may read public job/company pages and compare supported facts to the local profile; it must not submit applications or claim actions it did not perform.
+This is a single-user, local-first recruiting assistant. Keep the first release simple, explainable, and privacy-conscious. The model-driven agent may read public job/company pages and compare supported facts to the local profile, but it cannot fill or submit application forms. The separate Ashby application UI can submit only after a visible review and separate user confirmation.
 
 Before changing component boundaries, data flow, persistence, or agent capabilities, read [`docs/architecture/README.md`](docs/architecture/README.md) and the relevant architecture pages. Architecture changes must update those pages in the same change. If docs and code disagree, treat the code as current behavior, then correct the docs as part of the change.
 
@@ -29,7 +29,7 @@ Before changing component boundaries, data flow, persistence, or agent capabilit
 - Job facts require evidence/source provenance. Missing or ambiguous facts remain `unknown`; search snippets are leads, not verified evidence.
 - The defense-company exclusion is a dealbreaker: absence of evidence is not clearance.
 - Database access exposed to the model must stay read-only and scoped. Writes go through validated application services/API and explicit user intent.
-- Never implement form submission without an explicit review and separate user confirmation.
+- Never expose form filling or submission to the model. Application submission is allowed only through the Ashby application service after visible review and a separate user confirmation.
 
 ## Agent evaluations
 

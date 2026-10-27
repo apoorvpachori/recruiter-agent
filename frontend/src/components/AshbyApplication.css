@@ -1,0 +1,83 @@
+.workflow-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #596055;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workflow-link > span { width: 13px; color: #7e8e75; text-align: center; }
+.workflow-link:hover, .workflow-link.active { background: #e7ebe3; color: #354433; }
+
+.application-page {
+  width: min(860px, 100%);
+  align-self: center;
+  flex: 1;
+  padding: 48px 40px;
+}
+
+.application-heading { margin-bottom: 28px; }
+.application-eyebrow { color: #78876e; font: 9px "DM Mono", monospace; letter-spacing: 1.8px; }
+.application-heading h1 { margin: 10px 0 7px; font: 500 32px "Newsreader", serif; color: #293027; }
+.application-heading p, .application-start p { color: #81867c; font-size: 12px; line-height: 1.6; }
+.application-start, .application-review { padding: 22px; border: 1px solid #e4e8e0; border-radius: 10px; background: #fff; }
+.application-start { display: grid; gap: 10px; }
+.application-start > label, .application-field > label { color: #41483d; font-size: 11px; font-weight: 600; }
+.application-start input, .application-field input:not([type="checkbox"]):not([type="file"]),
+.application-field textarea, .application-field select {
+  width: 100%; min-height: 38px; padding: 9px 10px; border: 1px solid #dfe4da;
+  border-radius: 6px; background: #fff; color: #353a33; font: inherit; font-size: 12px;
+}
+.application-start p { margin: 0 0 5px; }
+.application-start code { font-family: "DM Mono", monospace; font-size: 10px; }
+.application-primary, .application-secondary, .application-submit {
+  min-height: 38px; padding: 0 14px; border-radius: 6px; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+}
+.application-primary, .application-submit { border: 1px solid #536b50; background: #536b50; color: white; }
+.application-primary:hover:not(:disabled), .application-submit:hover:not(:disabled) { background: #40573e; }
+.application-secondary { margin-top: 16px; border: 1px solid #dfe4da; background: #fafbf9; color: #4e5d49; }
+.application-primary:disabled, .application-secondary:disabled, .application-submit:disabled { opacity: .55; cursor: not-allowed; }
+.application-error, .application-result { margin: 14px 0; padding: 11px 13px; border: 1px solid #ecd0c7; border-radius: 7px; background: #fff8f5; color: #945d4d; font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
+.application-result.submitted { border-color: #cddbc7; background: #f1f6ee; color: #40573e; }
+.application-result.uncertain { border-color: #e5d8b9; background: #fffaf0; color: #765b24; }
+.application-target { display: grid; gap: 6px; padding-bottom: 18px; border-bottom: 1px solid #e9ece6; }
+.application-target span { color: #92978d; font: 9px "DM Mono", monospace; letter-spacing: 1px; }
+.application-target strong { color: #353b32; font: 500 20px "Newsreader", serif; }
+.application-target a { width: fit-content; max-width: 100%; color: #647b5d; font-size: 10px; overflow-wrap: anywhere; }
+.application-review-intro { padding: 18px 0 5px; }
+.application-review-intro h2 { margin: 0 0 5px; color: #353b32; font: 500 21px "Newsreader", serif; }
+.application-review-intro p { margin: 0; color: #858b81; font-size: 11px; line-height: 1.6; }
+.application-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin-top: 16px; }
+.application-field { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+.application-field:has(textarea) { grid-column: 1 / -1; }
+.application-field textarea { resize: vertical; }
+.application-field input[type="file"] { max-width: 100%; color: #596055; font-size: 10px; }
+.application-source { color: #92978d; font-size: 9px; }
+.application-file { display: grid; gap: 6px; }
+.application-file span { color: #586d51; font-size: 10px; overflow-wrap: anywhere; }
+.application-checkbox, .application-confirm-check { display: flex; align-items: flex-start; gap: 9px; color: #555c51; font-size: 11px; line-height: 1.55; }
+.application-checkbox input, .application-confirm-check input { flex: 0 0 auto; margin-top: 2px; accent-color: #536b50; }
+.application-confirmation { display: grid; gap: 12px; margin-top: 22px; padding: 17px; border: 1px solid #e6e8dc; border-radius: 8px; background: #fafbf7; }
+.application-warning { color: #594f38; font-size: 11px; font-weight: 600; line-height: 1.6; }
+.application-missing { margin: 0; color: #a46853; font-size: 10px; }
+.application-submit { width: 100%; }
+
+@media (max-width: 760px) {
+  .workflow-link { width: 36px; height: 36px; justify-content: center; padding: 0; margin-top: 5px; font-size: 0; }
+  .workflow-link > span { font-size: 13px; }
+  .application-page { padding: 28px 18px; }
+}
+
+@media (max-width: 520px) {
+  .application-fields { grid-template-columns: 1fr; }
+  .application-field:has(textarea) { grid-column: auto; }
+  .application-review, .application-start { padding: 16px; }
+}
