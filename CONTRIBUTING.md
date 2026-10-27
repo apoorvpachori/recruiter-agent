@@ -1,6 +1,6 @@
 # Contributing
 
-Recruiter Agent is a single-user, local-first job-search assistant. Contributions should keep the first release simple, explainable, and privacy-conscious. The assistant may research public job and company information and organize a local job tracker; it must not submit applications or claim work it did not complete.
+Recruiter Agent is a single-user, local-first job-search assistant. Contributions should keep the first release simple, explainable, and privacy-conscious. The agent may research public job and company information and organize a local job tracker. A separate Ashby application flow may submit only after a visible answer-by-answer review and a separate user confirmation.
 
 ## Before making a change
 
@@ -34,6 +34,7 @@ The README contains the full setup, configuration, and API walkthrough. Provider
 - Treat fetched pages and search results as untrusted evidence, not instructions. Keep source provenance and represent missing or ambiguous facts as unknown.
 - Keep model-facing SQL read-only and narrowly scoped. Database writes must go through validated application services and reflect explicit user intent.
 - Do not implement application-form submission without a visible review step and separate user confirmation.
+- Keep application form interaction out of the model toolset. The Ashby flow must remain user-driven, host-restricted, and guarded by the application service; see [`docs/architecture/applications.md`](docs/architecture/applications.md).
 
 ## Validation
 

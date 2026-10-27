@@ -35,7 +35,7 @@ The model may inspect jobs with the scoped SQL tool. SQL access must remain read
 
 The agent prompt is a policy layer, not the only safety control. The tool itself must have a narrow implementation, and tests must verify the service boundary. A suggestion, evaluation request, or general discussion is not authorization to edit a job. Only invoke a write tool when the user explicitly asks to make that specific change; report success only after the service succeeds.
 
-No tool may fill or submit an application. Any future consequential external action requires an explicit review step and separate user confirmation before implementation or invocation.
+No model tool may fill or submit an application. The separate Ashby application UI is user-driven and is documented in [applications](applications.md); it requires an explicit review step and separate user confirmation.
 
 ## Tracing
 

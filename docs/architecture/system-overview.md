@@ -10,6 +10,10 @@ flowchart LR
   FE -->|HTTP via local proxy| API[FastAPI API]
   API --> AG[Agent graph]
   API --> JS[Job services]
+  API --> APPFLOW[Ashby application service]
+  APPFLOW --> BROWSER[Restricted Ashby browser session]
+  APPFLOW --> JS
+  APPFLOW --> PROFILE[Ignored local profile JSON]
   AG --> TOOLS[Registered agent tools]
   TOOLS --> WEB[Public web fetch and search]
   TOOLS --> FIT[Job extraction and fit evaluation]
@@ -24,8 +28,9 @@ flowchart LR
 
 | Component | Owns | Must not own |
 | --- | --- | --- |
-| `frontend/` | Chat interaction and rendering the backend response | Provider credentials, business rules, database access, application submission |
+| `frontend/` | Chat interaction and Ashby answer review/confirmation | Provider credentials, database access, model-driven application submission |
 | `src/recruiter_agent/api/` | HTTP routes, request/response validation, HTTP error mapping | Agent policy, SQL construction, persistence rules |
+| `src/recruiter_agent/applications/` | Short-lived Ashby form drafts, supported-field mapping, confirmation and one-time submit | Model tool execution, persistent answer storage, arbitrary sites or browser control |
 | `src/recruiter_agent/agent/` | One-turn orchestration, system prompt, tool registration, tool-call policy | Raw persistence rules or unrestricted database access |
 | `src/recruiter_agent/jobs/` | Job domain types, fit assessment, SQL access boundary, validated persistence services | HTTP response details or provider credentials |
 | `src/recruiter_agent/profile/` | Typed profile model and loading the local profile file | Hard-coded personal profile data |
@@ -43,7 +48,7 @@ Keep HTTP handling in routers, input/output contracts in schemas, domain behavio
 4. A tool performs a bounded job, such as fetching a public page, searching, evaluating a posting, reading jobs, or making an explicitly requested tracker edit.
 5. The backend returns the final assistant text to the frontend. The UI renders assistant output as Markdown.
 
-The API also exposes `/v1/jobs` CRUD endpoints. Both those endpoints and the agent's save/update tools use the shared job services described in [data and persistence](data-and-persistence.md).
+The API also exposes `/v1/jobs` CRUD endpoints and `/v1/applications` for the separate Ashby review workflow. The application service updates the jobs tracker through shared job services. The agent's save/update tools also use those shared services.
 
 ## Change rules
 

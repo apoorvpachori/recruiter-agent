@@ -10,6 +10,7 @@ from fastapi import FastAPI, Request
 from starlette.responses import Response
 
 from recruiter_agent.api.router import api_router
+from recruiter_agent.applications.service import application_service
 from recruiter_agent.database import create_schema
 from recruiter_agent.logging_config import configure_logging
 
@@ -24,7 +25,10 @@ def make_lifespan(schema_initializer: Callable[[], None] = create_schema):
     async def lifespan(_app: FastAPI):
         """Initialize the minimal local SQLite schema at application startup."""
         schema_initializer()
-        yield
+        try:
+            yield
+        finally:
+            await application_service.close_all()
 
     return lifespan
 

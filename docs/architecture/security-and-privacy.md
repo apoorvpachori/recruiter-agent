@@ -34,7 +34,7 @@ Fetched pages and search output are untrusted input. They may contain malicious 
 
 ## Database and actions
 
-Model access is read-only and scoped to the jobs table. SQL mutations must remain impossible through that interface. Job creation and updates use the shared validated services and only occur on explicit user request. Application submission is outside current capability; any future external consequential action requires visible review and separate confirmation.
+Model access is read-only and scoped to the jobs table. SQL mutations must remain impossible through that interface. Job creation and updates use shared validated services and only occur on explicit user request. The model has no application browser or submission tool. The separate Ashby workflow is host-restricted, blocks non-read requests during page loading, then blocks all page traffic while the user reviews answers. It sends form values and selected files only to Ashby hosts after the user reviews the full form and confirms submission. See [applications](applications.md).
 
 ## Safe development
 

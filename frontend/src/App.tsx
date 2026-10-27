@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import AshbyApplication from "./components/AshbyApplication";
 
 type Message = {
   id: string;
@@ -20,7 +21,7 @@ const initialMessage: Message = {
   id: "welcome",
   role: "assistant",
   content:
-    "Hi, I’m your job-search copilot. Share a job link or ask me about your search. I can read job postings and compare them with your saved preferences; I can’t fill out or submit applications yet.",
+    "Hi, I’m your job-search copilot. Share a job link or ask me about your search. I can read job postings and compare them with your saved preferences. To prepare an Ashby application, open Apply to a job; I’ll show every answer for your review before anything is submitted.",
   timestamp: new Date(),
 };
 
@@ -31,6 +32,7 @@ const suggestions = [
 ];
 
 function App() {
+  const [view, setView] = useState<"assistant" | "apply">("assistant");
   const [messages, setMessages] = useState<Message[]>([initialMessage]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -139,10 +141,12 @@ function App() {
           <span className="workspace-menu" aria-hidden="true">···</span>
         </div>
 
-        <div className="sidebar-section-label recent-label">RECENT</div>
-        <button className="recent-item active">
-          <span className="recent-dot" />
-          <span>New conversation</span>
+        <div className="sidebar-section-label recent-label">YOUR WORK</div>
+        <button className={`workflow-link ${view === "assistant" ? "active" : ""}`} onClick={() => setView("assistant")}>
+          <span aria-hidden="true">✳</span> Assistant
+        </button>
+        <button className={`workflow-link ${view === "apply" ? "active" : ""}`} onClick={() => setView("apply")}>
+          <span aria-hidden="true">↗</span> Apply to a job
         </button>
 
         <div className="sidebar-spacer" />
@@ -165,14 +169,12 @@ function App() {
           <div className="breadcrumb">
             <span>My job search</span>
             <span className="breadcrumb-separator">/</span>
-            <span className="breadcrumb-current">Assistant</span>
+            <span className="breadcrumb-current">{view === "assistant" ? "Assistant" : "Application"}</span>
           </div>
-          <div className="topbar-status">
-            <span className="status-dot" />
-            Ready to help
-          </div>
+          {view === "assistant" && <div className="topbar-status"><span className="status-dot" />Ready to help</div>}
         </header>
 
+        {view === "apply" ? <AshbyApplication /> : <>
         <section className={`conversation ${isNewConversation ? "conversation-empty" : ""}`}>
           {isNewConversation && (
             <div className="welcome-heading">
@@ -250,6 +252,7 @@ function App() {
           </form>
           <div className="disclaimer">AI can make mistakes. Verify important details before making career decisions.</div>
         </footer>
+        </>}
       </main>
     </div>
   );

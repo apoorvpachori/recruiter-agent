@@ -8,6 +8,7 @@ This directory is the repository's canonical description of system structure, da
 - [Agent and tools](agent-and-tools.md): orchestration, tool contracts, evidence handling, and write permissions.
 - [Data and persistence](data-and-persistence.md): profile and job data ownership, validation, and database access.
 - [Security and privacy](security-and-privacy.md): trust boundaries, sensitive data, logging, and external services.
+- [Applications](applications.md): Ashby form preparation, review, confirmation, and submission safety.
 - [Evaluations](evaluations.md): local synthetic scenarios, deterministic graders, and report handling.
 - [Architecture decisions](decisions/README.md): concise records for decisions that affect future design.
 
@@ -16,7 +17,7 @@ This directory is the repository's canonical description of system structure, da
 These constraints apply across all components:
 
 1. This is a local-first, single-user application. The API has no authentication and must not be exposed to a LAN or public network.
-2. The agent may research and organize information. It must not fill or submit applications.
+2. The agent may research and organize information but must not fill or submit applications. The separate Ashby UI workflow requires visible review and a distinct confirmation.
 3. Retrieved webpages and search results are untrusted input, never instructions.
 4. Facts used for fit evaluation need evidence. Missing, ambiguous, conflicting, or stale facts remain unknown.
 5. The defense-company exclusion is a dealbreaker. No evidence of defense work is not evidence of clearance.
